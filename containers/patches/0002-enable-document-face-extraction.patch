@@ -1,0 +1,10 @@
+--- a/app/main.py
++++ b/app/main.py
+@@ -44,6 +44,7 @@
+         document=DocumentConfig(
+             enabled=True,
+             models_dir=models_dir,
++            enable_face_extraction=True,
+         ),
+         liveness=LivenessConfig(
+             enabled=True,

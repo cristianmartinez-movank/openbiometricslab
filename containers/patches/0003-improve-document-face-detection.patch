@@ -1,0 +1,58 @@
+--- a/app/routes/documents.py
++++ b/app/routes/documents.py
+@@ -69,6 +69,21 @@
+         check_digits_valid=mrz.check_digits_valid,
+     )
+ 
+ 
++def _face_detection_image(image: np.ndarray) -> np.ndarray:
++    """Upscale small document photo regions before face detection."""
++    height, width = image.shape[:2]
++    scale = min(2.5, max(1.0, 640.0 / max(height, width)))
++    if scale == 1.0:
++        return image
++    return cv2.resize(
++        image,
++        None,
++        fx=scale,
++        fy=scale,
++        interpolation=cv2.INTER_CUBIC,
++    )
++
++
+ @router.post("/scan", response_model=DocumentScanResponse)
+ async def scan_document(
+@@ -99,9 +114,15 @@
+     img = _decode_image(await image.read())
+     result = doc_pipeline.process(img)
+ 
++    face_detected = False
++    if result.face is not None and kernel.face is not None:
++        face_detected = bool(
++            kernel.face.process(_face_detection_image(result.face))
++        )
++
+     return DocumentScanResponse(
+         detected=detected,
+         ocr=_ocr_to_schema(result.ocr) if result.ocr else None,
+         mrz=_mrz_to_schema(result.mrz) if result.mrz else None,
+-        has_face=result.face is not None,
++        has_face=face_detected,
+     )
+@@ -158,10 +178,14 @@
+     doc_result = doc_pipeline.process(doc_img)
+     if doc_result.face is None:
+         raise HTTPException(status_code=400, detail="No face found on document")
+ 
+-    # Process document face and selfie through face pipeline
+-    doc_faces = face_pipeline.process(doc_result.face)
++    # Try the extracted photo region first, then the full rectified document.
++    doc_faces = face_pipeline.process(_face_detection_image(doc_result.face))
++    if not doc_faces and doc_result.document is not None:
++        doc_faces = face_pipeline.process(
++            _face_detection_image(doc_result.document.warped)
++        )
+     selfie_faces = face_pipeline.process(selfie_img)
+ 
+     if not doc_faces:
+         raise HTTPException(status_code=400, detail="Could not process document face")

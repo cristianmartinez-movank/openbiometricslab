@@ -1,0 +1,24 @@
+--- a/openbiometrics/core/pipeline.py
++++ b/openbiometrics/core/pipeline.py
+@@ -38,6 +38,9 @@
+     enable_demographics: bool = True
+     enable_quality: bool = True
+     quality_gate: bool = False  # Skip recognition if quality fails
++    detector: str = "auto"
++    recognizer: str = "auto"
++    demographics_model: str = "auto"
+ 
+ 
+ class FacePipeline:
+--- a/openbiometrics/kernel.py
++++ b/openbiometrics/kernel.py
+@@ -202,6 +202,9 @@
+             enable_demographics=face_cfg.enable_demographics,
+             enable_quality=face_cfg.enable_quality,
+             quality_gate=face_cfg.quality_gate,
++            detector=face_cfg.detector,
++            recognizer=face_cfg.recognizer,
++            demographics_model=face_cfg.demographics_model,
+         )
+         self._face_pipeline = FacePipeline(pipeline_config)
+         self._face_pipeline.load()

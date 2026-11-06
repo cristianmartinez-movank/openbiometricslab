@@ -1,0 +1,13 @@
+.git
+.gitignore
+.vscode
+.idea
+**/node_modules
+**/dist
+**/.svelte-kit
+**/coverage
+**/*.log
+openbiometrics/.git
+openbiometrics/packages
+openbiometrics/sdks
+openbiometrics/tests
